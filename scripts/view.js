@@ -95,8 +95,14 @@ class View {
         // draw the doodle
         this._ctx.drawImage(doodleImage, x, y, 80, 80);
 
+        // draw the hitbox of the doodle
+        this._ctx.beginPath();
+        this._ctx.rect(x, y, 80, 80);
+        this._ctx.stroke();
+        
+
     }
-    showPlatforms(platfosrms) {
+    showPlatforms(platforms) {
         for (let i = 0; i < platforms.length; i++) {
             let platform = platforms[i];
             // [1, 1, 57, 15]; // rectangle dans _HEXTILES_IMAGE qui represente la platform normal
@@ -123,6 +129,13 @@ class View {
                 srcY = 55;
             }
             this._ctx.drawImage(image, srcX, srcY, srcWidth, srcHeight, x, y, width, height);
+
+
+            // draw the hitbox of the platform
+            this._ctx.beginPath();
+            this._ctx.rect(x, y, width, height);
+            this._ctx.stroke();
+
             
         }
     }

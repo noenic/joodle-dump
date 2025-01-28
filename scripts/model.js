@@ -2,13 +2,13 @@ class Model {
     constructor(widthCanvas, heightCanvas) {
         this.widthCanvas = widthCanvas;
         this.heightCanvas = heightCanvas;
-        this.score = 1000;
-        this.platforms = [];
-        this.doodle = new Doodle(this);
         this.init();
     }
 
     init() {
+        this.score = 1000;
+        this.platforms = [];
+        this.doodle = new Doodle(this);
         this.generateInitalPlatforms();
     }
 
@@ -61,11 +61,7 @@ class Model {
     } 
     
     reset(){
-        this.score = 0;
-        this.doodle.reset();
-        this.platforms = [];
-        this.generateInitalPlatforms();
-        this.doodle.Jump();
+        this.init();
     }
 }
 
@@ -98,33 +94,6 @@ class Doodle {
 
     getPlatforms() {
         return this.model.platforms;
-    }
-    bindSetMouvement(direction){
-        // if left move 1px to the left
-        let mouvement = 5* this.x_velocity;
-        if (direction === -1){
-            this.x -= mouvement;
-            this.x_velocity = Math.max(2, this.x_velocity * 1.01);
-            // Change la direction du doodle 
-            this.direction = 61;
-            // Si on est à la limite du canvas 
-            if (this.x < -30){
-                this.x = this.model.widthCanvas - 30;
-            }
-        }
-        if (direction === 1){
-            this.x += mouvement
-            this.x_velocity = Math.max(2, this.x_velocity * 1.01);
-            this.direction = 1;
-            // Si on est à la limite du canvas 
-            if (this.x > this.model.widthCanvas-30){
-                this.x = -30;
-            }
-        }
-        if (direction === 0){
-            console.log("Stop moving")
-            this.x_velocity = 1;
-        }
     }
     
     Move(fps) {
