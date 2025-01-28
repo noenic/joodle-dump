@@ -1,0 +1,35 @@
+body {
+    background: radial-gradient(circle, #ADD8E6, #4682B4);
+    margin: 0;
+}
+
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+.green-button {
+    background-color: #9acd32;
+    color: #fff;
+    border: 3px solid #556b2f;
+    padding: 15px 40px;
+    font-size: 22px;
+    font-weight: bold;
+    border-radius: 25px;
+    cursor: pointer;
+    box-shadow: 3px 3px 0px #556b2f;
+    transition: all 0.2s ease-in-out;
+}
+
+.green-button:hover {
+    background-color: #adff2f;
+    box-shadow: 5px 5px 0px #556b2f;
+}
+
+canvas {
+    display: block;
+    margin: 20px auto;
+    background-color: #f3f3f3;
+    border-radius: 20px;
+    background-image: url('../tiles/bck@2x.png')
+}

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Joodle Dump</title>
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+
+<body>
+    <canvas id="my_canvas"></canvas>
+    <div class="button-container">
+        <button class="green-button" id="reset">Reset</button>
+    </div>
+</body>
+
+<script src="scripts/model.js"></script>
+<script src="scripts/view.js"></script>
+<script src="scripts/controller.js"></script>
+<script>
+    let widthCanvas = 480;
+    let heightCanvas = 768;
+    const app = new Controller(new Model(widthCanvas, heightCanvas), new View(widthCanvas, heightCanvas));
+    app.Update();
+</script>
+
+
+<style>
+
+
+</style>
+
+</html>
+
