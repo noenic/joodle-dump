@@ -6,36 +6,21 @@ class Model {
     }
 
     init() {
-        this.score = 1000;
+        this.score = 0;
         this.platforms = [];
         this.doodle = new Doodle(this);
-        this.generateInitalPlatforms();
+        this.generateInitialPlatforms();
     }
 
-    generateInitalPlatforms() {
-        // Générer les plateformes initiales (au début du jeu) sur toute la surface du canvas
-        // On genere  entre 5-7 platform normal 
-        // tout au long du canvas, en commence a 50px du bas du canvas et on les espaces de 100 à 400 px
-        let y = this.heightCanvas - 50;
-        // On fait en sorte que les plateformes rentrent dans le canvas (en x et en y)
-        for (let i = 0; i < Math.floor(Math.random() * (7 - 5) + 5); i++) {
-            let x = Math.floor(Math.random() * (this.widthCanvas - 57));
-            let platform = new Platform(this,x, y,this.score);
-            this.platforms.push(platform);
-            console.log(this.platforms);
-            y -= Math.floor(Math.random() * (200 - 100) + 100);
+    generateInitialPlatforms() {
+        for (let y = this.heightCanvas - 30; y > 0; y -= Math.random() * 40 + 30) {
+            this.platforms.push(new Platform(this, Math.random() * (this.widthCanvas - 57), y, this.score));
         }
     }
-
 
     deletePlatform(platform) {
-        // Supprimer une plateforme
-        for (let i = 0; i < this.platforms.length; i++) {
-            if (platform === this.platforms[i]) {
-                console.log("delete platform");
-                this.platforms.splice(i, 1);
-            }
-        }
+        if (platform.interval) clearInterval(platform.interval);
+        this.platforms = this.platforms.filter(p => p !== platform);
     }
     
     BindDisplay(callback) {
@@ -43,177 +28,117 @@ class Model {
     }
 
     Move(fps) {
-        if (!this.doodle.isAlive) {
-            console.log("Game over");
-            return;
-        }
-        this.doodle.Move(fps);
+        if (!this.doodle.isAlive) return console.log("Game over");
 
+        let minGap = Math.min(10 + this.score / 100, 240);
+        let maxGap = Math.min(100 + this.score / 50, 280);
+        let gapFactor = Math.pow(Math.random(), 2 - Math.min(this.score / 500, 1));
+        let gap = Math.floor(minGap + gapFactor * (maxGap - minGap));
+
+        if (this.platforms[this.platforms.length - 1].y > gap) this.generateNewPlatform();
+
+        this.doodle.Move(fps);
         this.b_Display({
-            position : this.doodle.getPosition(),
-            direction : this.doodle.getDirection(),
-            platforms : this.platforms
-    });
+            position: this.doodle.getPosition(),
+            direction: this.doodle.getDirection(),
+            platforms: this.platforms,
+            score: this.score
+        });
     }
     
     generateNewPlatform() {
-        // Générer une nouvelle plateforme
-    } 
+        this.platforms.push(new Platform(this, Math.random() * (this.widthCanvas - 57), -1, this.score));
+    }
     
-    reset(){
+    reset() {
         this.init();
     }
 }
 
-
-
-
 class Doodle {
     static JUMP_FORCE = 850;
     static GRAVITY = 20;
-    static SPEED = 200;
+    static SPEED = 300;
 
     constructor(model) {
         this.model = model;
-        this.x = 240; // Initial x position
-        this.y = 484; // Initial y position
-        this.x_velocity = 1;
-        this.direction = 0;
-        this.gravitySpeed = 0;
-        this.isAlive = true;
-        this.isFalling = false;
+        this.reset();
     }
 
-    getPosition() {
-        return {x: this.x, y: this.y};
-    }
+    getPosition() { return { x: this.x, y: this.y }; }
+    getDirection() { return this.direction; }
 
-    getDirection() {
-        return this.direction;
-    }
-
-    getPlatforms() {
-        return this.model.platforms;
+    setDirection(newDirection) {
+        this.direction = newDirection;
+        if (newDirection) this.lastDirection = newDirection;
     }
     
     Move(fps) {
-        // console.log("move");
         this.gravitySpeed += Doodle.GRAVITY;
         this.y += this.gravitySpeed / fps;
-        this.x += this.direction * Doodle.SPEED / fps;
+        this.x = (this.x + this.direction * Doodle.SPEED / fps + this.model.widthCanvas) % this.model.widthCanvas;
 
-        //  when gravitySpeed is greater than 0, the doodle is falling
-
-        // when the doodle is falling and collides with a platform, it should bounce back
-        if (this.gravitySpeed > 0){
-
-            // check if the doodle is colliding with a platform
-            for (let i = 0; i < this.model.platforms.length; i++) {
-                let platform = this.model.platforms[i];
-                if (this.y < platform.y && this.y > platform.y - 17 && this.x > platform.x - 57 && this.x < platform.x + 57) {
-                    console.log("collide");
-                    this.gravitySpeed = -Doodle.JUMP_FORCE;
-                }
-            }
-
+        if (this.y < this.model.heightCanvas * 0.35) {
+            this.y = this.model.heightCanvas * 0.35;
+            let moveDistance = Math.abs(this.gravitySpeed) / fps;
+            this.model.platforms.forEach(p => p.scrollDown(moveDistance));
+            this.model.score += Math.floor(moveDistance / 5);
         }
 
-
-        // Si On sort du canvas on revient de l'autre côté (30px pour laisser un peu du doodle sortir)
-        if (this.x > this.model.widthCanvas-30) {
-            this.x = -30;
-        }
-
-        if (this.x < -30) {
-            this.x = this.model.widthCanvas - 30;
-        }
-
-        // check if the doodle is colliding with a platform
-
-        
-
-        // Si on est a moins de 100px du bas du canvas
-        if (this.y > this.model.heightCanvas - 100) {
-            this.Jump();
-        }
-        // this.Jump();
-
-        if (this.y > this.model.heightCanvas) {
-            this.model.reset();
-        }
+        if (this.gravitySpeed > 0 && this.collision()) this.Jump();
+        if (this.y > this.model.heightCanvas) this.model.reset();
     }
 
     Jump() {
-        console.log("jump");
         this.gravitySpeed = -Doodle.JUMP_FORCE;
     }
 
-    reset() {
-        this.x = 240;
-        this.y = 484;
-        this.x_velocity = 1;
-        this.direction = 0;
-        this.gravitySpeed = 0;
-        this.isAlive = true;
-        this.isFalling = false;
+    collision() {
+        return this.model.platforms.find(platform => {
+            let inXRange = (this.x + 16 >= platform.x && this.x + 16 <= platform.x + platform.width) ||
+                            (this.x + 57 >= platform.x && this.x + 57 <= platform.x + platform.width);
+            let inYRange = (this.y + 80 >= platform.y && this.y + 80 <= platform.y + platform.height);
+            if (inXRange && inYRange && platform.type === "falling") {
+                platform.interval = setInterval(() => platform.scrollDown(5), 1000 / 60);
+            }
+            return inXRange && inYRange;
+        });
     }
-
+    
+    reset() {
+        Object.assign(this, { x: 240, y: 484, direction: 0, gravitySpeed: 0, isAlive: true });
+    }
 }
 
-
 class Platform {
-    constructor(game,x,y,score) {
+    constructor(game, x, y, score) {
         this.game = game;
-        this.width = 57
-        this.height = 17
         this.x = x;
         this.y = y;
+        this.width = 57;
+        this.height = 17;
         this.type = this.setRandomType(score);
-        // setInterval(this.scrollDown.bind(this,7),10);
-        
+        this.direction = 1;
+        if (this.type === "moving") {
+            this.interval = setInterval(() => this.move(), 1000 / 60);
+        }
     }
 
     scrollDown(y) {
-        // fait descendre la plateforme
-        // random entre 0 et 5
-        y= Math.random() * 5;
         this.y += y;
-        if (this.y > this.game.heightCanvas) {
-            this.game.deletePlatform(this);
-        }
+        if (this.y > this.game.heightCanvas) this.game.deletePlatform(this);
+    }
 
+    move() {
+        this.x += this.direction * 5;
+        if (this.x <= 0 || this.x >= this.game.widthCanvas - this.width) this.direction *= -1;
     }
 
     setRandomType(score) {
-        // Probabilités initiales pour les plateformes
-        let normalProbability = 1.0; // 100% au début
-        let movingProbability = 0.0;
-        let unstableProbability = 0.0;
-        
-        // En fonction du score on va changer les probabilités 
-        // le minium c'est entre 0.2 et 0.5
-        // movingProbability = Math.min(0.5, score / 10000);
-        movingProbability = Math.min(Math.random() * 0.5, score / 10000);
-        unstableProbability = Math.min(Math.random() * 0.5, score / 10000);
-        normalProbability = 1 - movingProbability - unstableProbability;
-        // Générer un nombre aléatoire entre 0 et 1
-        console.log(`normalProbability: ${normalProbability}, movingProbability: ${movingProbability}, unstableProbability: ${unstableProbability}`);
+        let movingProbability = Math.min(Math.random() * 0.5, score / 50000);
+        let unstableProbability = Math.min(Math.random() * 0.5, score / 50000);
+        let normalProbability = 1 - movingProbability - unstableProbability;
         let random = Math.random();
-        // Si le nombre aléatoire est inférieur à la probabilité de la plateforme normale
-        if (random < normalProbability) {
-            return "normal";
-        }
-
-        // Si le nombre aléatoire est inférieur à la probabilité de la plateforme mouvante
-        if (random < normalProbability + movingProbability) {
-            return "moving";
-        }
-
-        // Si le nombre aléatoire est inférieur à la probabilité de la plateforme instable
-        return "disappearing";
-
-
+        return random < normalProbability ? "normal" : random < normalProbability + movingProbability ? "moving" : "falling";
     }
-};
-
-
+}

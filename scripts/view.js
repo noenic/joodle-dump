@@ -41,8 +41,14 @@ class View {
     }
 
     BindSetDirection(callback) {
-        this.b_SetDirection = callback;
+        this.SetDirection = callback;
     }
+    BindReset(callback) {
+        this.reset = callback;
+    }
+
+
+
 
 
 
@@ -52,11 +58,11 @@ class View {
                 switch (evt.key) {
                     case 'ArrowLeft': // Move left.
                         this._hold_left = true;
-                        this.b_SetDirection(-1);
+                        this.SetDirection(-1);
                         break;
                     case 'ArrowRight': // Move right.
                         this._hold_right = true;
-                        this.b_SetDirection(1);
+                        this.SetDirection(1);
                         break;
                 }
             }
@@ -66,17 +72,22 @@ class View {
             switch (evt.key) {
                 case 'ArrowLeft': // Move left.
                     if (!this._hold_right) {
-                        this.b_SetDirection(0);
+                        this.SetDirection(0);
                     }
                     this._hold_left = false;
                     break;
                 case 'ArrowRight': // Move right.
                     if (!this._hold_left) {
-                        this.b_SetDirection(0);
+                        this.SetDirection(0);
                     }
                     this._hold_right = false;
                     break;
             }
+        });
+
+        // when we click the "reset" button, we reset the game
+        document.getElementById('reset').addEventListener('click', () => {
+            this.reset();
         });
     }
     showDoodle(position, direction) {
@@ -95,10 +106,22 @@ class View {
         // draw the doodle
         this._ctx.drawImage(doodleImage, x, y, 80, 80);
 
-        // draw the hitbox of the doodle
+        // draw the hitbox of the doodle, depending on the direction we shorten the hitbox by 16px
+
+        // draw the feets line of the doodle oin red 
+        this._ctx.strokeStyle = "red";
         this._ctx.beginPath();
-        this._ctx.rect(x, y, 80, 80);
+        if (direction == -1) {
+            this._ctx.moveTo(x+16, y+80);
+            this._ctx.lineTo(x+57, y+80);
+        } else {
+            this._ctx.moveTo(x+23, y+80);
+            this._ctx.lineTo(x+64, y+80);
+        }
         this._ctx.stroke();
+        this._ctx.strokeStyle = "black";
+
+
         
 
     }
@@ -125,7 +148,7 @@ class View {
             if (type == "moving") {
                 srcY = 19;
             }
-            if (type == "disappearing") {
+            if (type == "falling") {
                 srcY = 55;
             }
             this._ctx.drawImage(image, srcX, srcY, srcWidth, srcHeight, x, y, width, height);
@@ -143,6 +166,11 @@ class View {
         this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
         this.showPlatforms(data.platforms);
         this.showDoodle(data.position, data.direction);
+        this.setScore(data.score);
+    }
+
+    setScore(score) {
+        document.getElementById('score-value').innerText = score;
     }
 
 

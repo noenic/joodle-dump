@@ -14,7 +14,7 @@ class Controller {
         //this.view.bindSetMouvement(this.bindSetMouvement.bind(this));
         this.model.BindDisplay(this.Display.bind(this));
         this.view.BindSetDirection(this.SetDirection.bind(this));
-
+        this.view.BindReset(this.reset.bind(this));
 
     }
 
@@ -31,19 +31,17 @@ class Controller {
     bindGetPlatforms() {
         return this.model.platforms;
     }
-    bindSetMouvement(movement){
-        this.model.doodle.bindSetMouvement(movement);
+    SetDirection(newDirection) {
+        this.model.doodle.setDirection(newDirection);
     }
+    reset() {
+        this.model.reset();
+    }
+
     display(data) {
         this.view.Display(data);
     }
-
     
-    SetDirection(newDirection) {
-        this.model.doodle.direction = newDirection;
-        console.log("The current direction is: ", this.model.doodle.direction);
-    }
-
 
     Update() {
         /* Calcul du deltaTime */

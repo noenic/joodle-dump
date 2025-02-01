@@ -33,3 +33,12 @@ canvas {
     border-radius: 20px;
     background-image: url('../tiles/bck@2x.png')
 }
+
+#score-value {
+    font-size: 24px;
+    font-weight: bold;
+    color: #000;
+    text-align: center;
+    margin-top: 10px;
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+}
