@@ -8,13 +8,13 @@ class Controller {
         this.fps           = 60; 
         this.frameDuration = 1000 / this.fps;
 
-        this.view.bindGetPosition(this.bindGetPosition.bind(this));
-        this.view.bindGetDirection(this.bindGetDirection.bind(this));
-        this.view.bindGetPlatforms(this.bindGetPlatforms.bind(this));
-        //this.view.bindSetMouvement(this.bindSetMouvement.bind(this));
-        this.model.BindDisplay(this.Display.bind(this));
-        this.view.BindSetDirection(this.SetDirection.bind(this));
-        this.view.BindReset(this.reset.bind(this));
+        // Connexion de la vue avec le controller
+        this.view.bindSetDirection(this.SetDirection.bind(this));
+        this.view.bindReset(this.reset.bind(this));
+
+        // Connexion du model avec le controller
+        this.model.BindDebug(this.showDebug.bind(this));
+        this.model.BindDisplay(this.display.bind(this));
 
     }
 
@@ -22,24 +22,18 @@ class Controller {
         this.view.Display(position);
     }
 
-    bindGetPosition() {
-        return this.model.doodle.getPosition();
-    }
-    bindGetDirection() {
-        return this.model.doodle.direction;
-    }
-    bindGetPlatforms() {
-        return this.model.platforms;
-    }
     SetDirection(newDirection) {
         this.model.doodle.setDirection(newDirection);
+    }
+    showDebug(ctx,data) {
+        this.view.showDebug(ctx,data);
     }
     reset() {
         this.model.reset();
     }
 
     display(data) {
-        this.view.Display(data);
+        this.view.display(data);
     }
     
 
@@ -47,7 +41,6 @@ class Controller {
         /* Calcul du deltaTime */
         let currentTime = Date.now();
         let deltaTime   = currentTime - this.startTime; // La durée entre deux appels (entre 2 frames).
-        // console.log("Update");
         
         this.lag += deltaTime;
         this.startTime = currentTime;
@@ -55,7 +48,6 @@ class Controller {
         /* Mettre à jour la logique si la variable _lag est supérieure ou égale à la durée d'une frame */
         while (this.lag >= this.frameDuration) {
             /* Mise à jour de la logique */
-
 
             this.model.Move(this.fps);
             /* Réduire la variable _lag par la durée d'une frame */

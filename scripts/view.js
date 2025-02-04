@@ -1,180 +1,183 @@
 class View {
-    constructor(widthCanvas, heightCanvas) {
-        this._canvas = document.getElementById('my_canvas');
-        this._ctx = this._canvas.getContext('2d');
-        this._canvas.width = widthCanvas;
-        this._canvas.height = heightCanvas;
-
-        this._hold_right = false;
-        this._hold_left = false;
-
-        this._doodleLeft = new Image();
-        this._doodleLeft.src = '/doodlejump/tiles/lik-left@2x.png';
-
-        this._doodleRight = new Image();
-        this._doodleRight.src = '/doodlejump/tiles/lik-right@2x.png';
+    constructor(width, height) {
+        // Initialisation du canvas et du contexte
+        this.canvas = document.getElementById('my_canvas');
+        this.ctx = this.canvas.getContext('2d');
+        this.canvas.width = width;
+        this.canvas.height = height;
         
-        this._HEXTILES_IMAGE = new Image();
-        this._HEXTILES_IMAGE.src = '/doodlejump/tiles/game-tiles.png';
-
-        this._doodleLastDirection = 1;
+        // Initialisation du mode debug
+        this.debugCheckbox = document.getElementById('toggle-hitbox');
+        this.debug = this.debugCheckbox.checked;
+        this.debugCheckbox.addEventListener('change', (evt) => {
+            this.debug = evt.target.checked;
+        });
         
-        this.Events();
+        // Chargement des images
+        this.doodleLeftImg = this._loadImage('/doodlejump/tiles/lik-left@2x.png');
+        this.doodleRightImg = this._loadImage('/doodlejump/tiles/lik-right@2x.png');
+        this.tilesetImg = this._loadImage('/doodlejump/tiles/game-tiles.png');
+        
+        // État des touches
+        this.isMovingLeft = false;
+        this.isMovingRight = false;
+        this.lastDirection = 1;
+        
+        // Élément de score
+        this.scoreElem = document.getElementById('score-value');
+        
+        // Probabilités des plateformes
+        this.greenProbElem = document.getElementById('prob-green'); 
+        this.blueProbElem = document.getElementById('prob-blue');
+        this.whiteProbElem = document.getElementById('prob-white');
+        
+        // Espacement des plateformes
+        this.gapMinElem = document.getElementById('gap-min');
+        this.gapMaxElem = document.getElementById('gap-max');
+        this.gapLastElem = document.getElementById('gap-last');
+        
+        // Overlay Game Over
+        this.overlay = document.getElementById('game-over-overlay');
+        this.finalScoreElem = document.getElementById('final-score');
+        this.resetButton = document.getElementById('overlay-reset');
+        this.resetButton.addEventListener('click', () => this._resetGame());
+        
+        // Initialisation des événements
+        this._initEvents();
     }
 
-    bindGetPosition(callback) {
-        this.getPosition = callback;
-        console.log(this.getPosition());
+    /**
+     * Charge une image et retourne l'objet Image correspondant
+     */
+    _loadImage(src) {
+        const img = new Image();
+        img.src = src;
+        return img;
     }
     
-    bindGetDirection(callback) {
-        this.getDirection = callback;
-        console.log("Direction is", this.getDirection());
+    /**
+     * Réinitialise le jeu
+     */
+    _resetGame() {
+        this.overlay.style.display = 'none';
+        this.resetCallback();
+    }
+    
+    /**
+     * Bind des callbacks pour la logique du jeu
+     */
+    bindReset(callback) {
+        this.resetCallback = callback;
     }
 
-    bindGetPlatforms(callback) {
-        this.getPlatforms = callback;
-        console.log(this.getPlatforms());
+    bindSetDirection(callback) {
+        this.setDirectionCallback = callback;
     }
-    bindGetPlatforms(callback) {
-        this.getPlatforms = callback
-    }
-
-    BindSetDirection(callback) {
-        this.SetDirection = callback;
-    }
-    BindReset(callback) {
-        this.reset = callback;
+    
+    /**
+     * Gestion des événements clavier
+     */
+    _initEvents() {
+        document.addEventListener('keydown', (evt) => this._handleKeyDown(evt));
+        document.addEventListener('keyup', (evt) => this._handleKeyUp(evt));
+        document.getElementById('reset').addEventListener('click', () => this.resetCallback());
     }
 
+    _handleKeyDown(evt) {
+        if (evt.key === 'ArrowLeft' || evt.key === 'ArrowRight') {
+            this.isMovingLeft = evt.key === 'ArrowLeft';
+            this.isMovingRight = evt.key === 'ArrowRight';
+            this.setDirectionCallback(this.isMovingLeft ? -1 : 1);
+        }
+    }
 
-
-
-
-
-    Events() {
-        document.addEventListener('keydown', (evt) => {                
-            if (evt.key == 'ArrowLeft' || evt.key == 'ArrowRight') {
-                switch (evt.key) {
-                    case 'ArrowLeft': // Move left.
-                        this._hold_left = true;
-                        this.SetDirection(-1);
-                        break;
-                    case 'ArrowRight': // Move right.
-                        this._hold_right = true;
-                        this.SetDirection(1);
-                        break;
-                }
+    _handleKeyUp(evt) {
+        if (evt.key === 'ArrowLeft' || evt.key === 'ArrowRight') {
+            if ((!this.isMovingLeft && evt.key === 'ArrowRight') || (!this.isMovingRight && evt.key === 'ArrowLeft')) {
+                this.setDirectionCallback(0);
             }
-        });
-
-        document.addEventListener('keyup', (evt) => {
-            switch (evt.key) {
-                case 'ArrowLeft': // Move left.
-                    if (!this._hold_right) {
-                        this.SetDirection(0);
-                    }
-                    this._hold_left = false;
-                    break;
-                case 'ArrowRight': // Move right.
-                    if (!this._hold_left) {
-                        this.SetDirection(0);
-                    }
-                    this._hold_right = false;
-                    break;
-            }
-        });
-
-        // when we click the "reset" button, we reset the game
-        document.getElementById('reset').addEventListener('click', () => {
-            this.reset();
-        });
+            this.isMovingLeft = evt.key !== 'ArrowLeft' ? this.isMovingLeft : false;
+            this.isMovingRight = evt.key !== 'ArrowRight' ? this.isMovingRight : false;
+        }
     }
+    
+    /**
+     * Nettoie le canvas
+     */
+    _clearCanvas() {
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+    }
+    
+    /**
+     * Affiche le personnage principal
+     */
     showDoodle(position, direction) {
-        // get the correct image of the doodle
-        //  on random la position entre 0 et 1
-        let x = position.x;
-        let y = position.y;
-        // if direction is 0, we take the last direction
-        if (direction == 0) {
-            direction = this._doodleLastDirection;
-        }
-        this._doodleLastDirection = direction;
-        let doodleImage = direction == -1 ? this._doodleLeft : this._doodleRight;
+        let { x, y } = position;
+        if (direction === 0) direction = this.lastDirection;
+        this.lastDirection = direction;
+        const doodleImage = direction === -1 ? this.doodleLeftImg : this.doodleRightImg;
 
-
-        // draw the doodle
-        this._ctx.drawImage(doodleImage, x, y, 80, 80);
-
-        // draw the hitbox of the doodle, depending on the direction we shorten the hitbox by 16px
-
-        // draw the feets line of the doodle oin red 
-        this._ctx.strokeStyle = "red";
-        this._ctx.beginPath();
-        if (direction == -1) {
-            this._ctx.moveTo(x+16, y+80);
-            this._ctx.lineTo(x+57, y+80);
-        } else {
-            this._ctx.moveTo(x+23, y+80);
-            this._ctx.lineTo(x+64, y+80);
-        }
-        this._ctx.stroke();
-        this._ctx.strokeStyle = "black";
-
-
+        this.ctx.drawImage(doodleImage, x, y, 80, 80);
         
-
-    }
-    showPlatforms(platforms) {
-        for (let i = 0; i < platforms.length; i++) {
-            let platform = platforms[i];
-            // [1, 1, 57, 15]; // rectangle dans _HEXTILES_IMAGE qui represente la platform normal
-            // [1, 19, 57, 15]; //mouvante
-            // [1, 55, 57, 15]; // desparait
-
-            let x = platform.x;
-            let y = platform.y;
-            let width = platform.width;
-            let height = platform.height;
-            let type = platform.type;
-            let image = this._HEXTILES_IMAGE;
-            let srcX = 1;
-            let srcY = 1;
-            let srcWidth = 57;
-            let srcHeight = 15;
-            if (type == "normal") {
-                srcY = 1;
-            }
-            if (type == "moving") {
-                srcY = 19;
-            }
-            if (type == "falling") {
-                srcY = 55;
-            }
-            this._ctx.drawImage(image, srcX, srcY, srcWidth, srcHeight, x, y, width, height);
-
-
-            // draw the hitbox of the platform
-            this._ctx.beginPath();
-            this._ctx.rect(x, y, width, height);
-            this._ctx.stroke();
-
-            
+        if (this.debug) {
+            this.ctx.strokeStyle = "red";
+            this.ctx.beginPath();
+            this.ctx.moveTo(x + (direction === -1 ? 16 : 23), y + 80);
+            this.ctx.lineTo(x + (direction === -1 ? 57 : 64), y + 80);
+            this.ctx.stroke();
+            this.ctx.strokeStyle = "black";
         }
     }
-    Display(data) {
-        this._ctx.clearRect(0, 0, this._canvas.width, this._canvas.height);
+    
+    /**
+     * Affiche les plateformes
+     */
+    showPlatforms(platforms) {
+        const platformTypes = { normal: 1, moving: 19, falling: 55 };
+        
+        platforms.forEach(({ x, y, width, height, type }) => {
+            this.ctx.drawImage(this.tilesetImg, 1, platformTypes[type], 57, 15, x, y, width, height);
+            if (this.debug) {
+                this.ctx.strokeStyle = "blue";
+                this.ctx.strokeRect(x, y, width, height);
+            }
+        });
+    }
+    
+    /**
+     * Affiche les données de debug
+     */
+    showDebug(context, data) {
+        if (context === "gaps") {
+            this.gapMinElem.innerText = `${Math.floor(data.minGap)}px`;
+            this.gapMaxElem.innerText = `${Math.floor(data.maxGap)}px`;
+            this.gapLastElem.innerText = `${Math.floor(data.gap)}px`;
+        } else if (context === "prob") {
+            this.greenProbElem.innerText = `${(data.normal * 100).toFixed(2)}%`;
+            this.blueProbElem.innerText = `${(data.moving * 100).toFixed(2)}%`;
+            this.whiteProbElem.innerText = `${(data.falling * 100).toFixed(2)}%`;
+        }
+    }
+    
+    /**
+     * Met à jour l'affichage du jeu
+     */
+    display(data) {
+        if (!data.isAlive) {
+            this.overlay.style.display = 'flex';
+            this.finalScoreElem.innerText = `Score: ${data.score}`;
+            return;
+        }
+        this._clearCanvas();
         this.showPlatforms(data.platforms);
         this.showDoodle(data.position, data.direction);
         this.setScore(data.score);
     }
-
-    setScore(score) {
-        document.getElementById('score-value').innerText = score;
-    }
-
-
-    // make update a function that is called every frame by the browser
-    // requestAnimationFrame(this.update.bind(this));
     
+    /**
+     * Met à jour l'affichage du score
+     */
+    setScore(score) {
+        this.scoreElem.innerText = score;
+    }
 }
