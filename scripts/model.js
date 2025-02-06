@@ -167,14 +167,6 @@ class Doodle {
         }
         return res;
     }
-
-    reset() {
-        this.x = Doodle.INITIAL_POSITION_X;
-        this.y = Doodle.INITIAL_POSITION_Y;
-        this.direction = 0;
-        this.gravitySpeed = 0;
-        this.isAlive = true;
-    }
 }
 
 
