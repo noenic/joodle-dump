@@ -89,7 +89,7 @@ class Model {
         let x = Math.floor(Math.random() * (this.widthCanvas - 57)); // Position X aléatoire
         let y = -10; // Position Y en dehors du canvas pour apparaître progressivement
         let platform = new Platform(this, x, y, this.score);
-        this.platforms.push(platform);
+        this.platforms.push(platform); // Ajout de la nouvelle plateforme à la liste
     }
     
     reset() {
